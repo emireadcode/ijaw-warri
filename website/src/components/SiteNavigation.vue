@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import ArrowDown from './icons/ArrowDown.vue';
 import { closeOrStillOpenDropdown } from './utility/';
-import { RouterLink} from 'vue-router'
-import { ref, computed } from 'vue';
+import { RouterLink } from 'vue-router';
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { useUpdateScreenWidth } from './composables/UpdateScreenWidth.js';
 
 const 
@@ -26,6 +26,37 @@ const
 function changeArrowDown(id: 'PROJECTS' | 'EVENTS', color: string) {
   document.getElementById(id.toLowerCase()+'-link')?.querySelector('svg')?.setAttribute('fill', color);
 }
+
+function closeDropDown($evt: Event) {
+  const goingTo =  $evt.srcElement || $evt.originalTarget;
+  return (goingTo.closest('#projects') || goingTo.closest('#projects-link') || goingTo.closest('#events') || goingTo.closest('#events-link'))? 
+  (
+    (goingTo.closest('#projects') || goingTo.closest('#projects-link'))?
+    'PROJECTS' : 'EVENTS'
+  ) : '';
+}
+
+function closeDropDownEventEmitter($evt: Event) {
+  dropDownNav.value = closeDropDown($evt);
+}
+
+onMounted(() => {
+  document.addEventListener('click', closeDropDownEventEmitter);
+  document.addEventListener('mousemove', closeDropDownEventEmitter);
+  document.addEventListener('contextmenu', closeDropDownEventEmitter);
+  document.addEventListener('dblclick', closeDropDownEventEmitter);
+  document.addEventListener('mousedown', closeDropDownEventEmitter);
+  document.addEventListener('mouseup', closeDropDownEventEmitter);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', closeDropDownEventEmitter);
+  document.removeEventListener('mousemove', closeDropDownEventEmitter);
+  document.removeEventListener('contextmenu', closeDropDownEventEmitter);
+  document.removeEventListener('dblclick', closeDropDownEventEmitter);
+  document.removeEventListener('mousedown', closeDropDownEventEmitter);
+  document.removeEventListener('mouseup', closeDropDownEventEmitter);
+});
 </script>
 
 <template>
@@ -49,12 +80,26 @@ function changeArrowDown(id: 'PROJECTS' | 'EVENTS', color: string) {
         <a 
           tabindex="0" 
           id="projects-link" 
-          @click="() => {(screenWidth >= 1200)? dropDownNav='PROJECTS' : dropDownNav = '';}" 
-          @focus="() => {(screenWidth >= 1200)? dropDownNav='PROJECTS' : dropDownNav = '';}" 
-          @keyup.enter="() => {(screenWidth >= 1200)? dropDownNav='PROJECTS' : dropDownNav = '';}"
-          @mouseover="() => {(screenWidth >= 1200)? dropDownNav='PROJECTS' : dropDownNav = '';}"
-          @mouseleave="(closeOrStillOpenDropdown($event, ['projects']) && (screenWidth >= 1200))? dropDownNav = 'PROJECTS' : dropDownNav = ''"
-          @blur="(closeOrStillOpenDropdown($event, ['projects']) && (screenWidth >= 1200))? dropDownNav = 'PROJECTS' : dropDownNav = ''"
+          @click="() => {
+            dropDownNav = (screenWidth >= 1200)? 'PROJECTS' : '';
+            (screenWidth >= 1200)? changeArrowDown('PROJECTS', '#fff') : '';
+          }" 
+          @focus="() => {
+            dropDownNav = (screenWidth >= 1200)? 'PROJECTS' : '';
+            (screenWidth >= 1200)? changeArrowDown('PROJECTS', '#fff') : '';
+          }" 
+          @keyup.enter="() => {
+            dropDownNav = (screenWidth >= 1200)? 'PROJECTS' : '';
+            (screenWidth >= 1200)? changeArrowDown('PROJECTS', '#fff') : '';
+          }"
+          @mouseover="() => {
+            dropDownNav = (screenWidth >= 1200)? 'PROJECTS' : '';
+            (screenWidth >= 1200)? changeArrowDown('PROJECTS', '#fff') : '';
+          }" 
+          @mouseleave="($event: Event) => {
+            dropDownNav = screenWidth >= 1200? (closeOrStillOpenDropdown($event, ['projects'])? 'PROJECTS' : '') : '';
+            (screenWidth >= 1200)? (dropDownNav === 'PROJECTS'? changeArrowDown('PROJECTS', '#fff') : changeArrowDown('PROJECTS', '#00000')) : '';
+          }" 
           class="d-block underline-none" 
           :style="(screenWidth >= 1200)? changeDropDownBGColor('PROJECTS')+'padding:6px 0;' : 'padding:10px 0;background-color:#ebe9eb;'"
           :class="(screenWidth >= 1200)? ['nav-link', 'border-tr-tl-radius-15-px', 'cursor-pointer'] : ''"
@@ -75,7 +120,10 @@ function changeArrowDown(id: 'PROJECTS' | 'EVENTS', color: string) {
             <template v-if="dropDownNav === 'PROJECTS'">
               <div 
                 style="width:250px;" 
-                @mouseleave="closeOrStillOpenDropdown($event, ['projects-link'])? dropDownNav = 'PROJECTS' : dropDownNav = ''" 
+                @mouseleave="($event: Event) => {
+                  dropDownNav = (closeOrStillOpenDropdown($event, ['projects-link', 'projects']) && screenWidth >= 1200)? 'PROJECTS' : '';
+                  (screenWidth >= 1200)? (dropDownNav === 'PROJECTS'? changeArrowDown('PROJECTS', '#fff') : changeArrowDown('PROJECTS', '#00000')) : '';
+                }" 
                 id="projects" 
                 class="position-absolute"
               >
@@ -86,21 +134,15 @@ function changeArrowDown(id: 'PROJECTS' | 'EVENTS', color: string) {
                         to="/projects/completed" 
                         style="padding:8px 5px;" 
                         class="d-block underline-none cursor-pointer" 
-                        @blur="($event: Event) => {
-                          (closeOrStillOpenDropdown($event, ['projects', 'projects-link']) && (screenWidth >= 1200))? dropDownNav = 'PROJECTS' : dropDownNav = '';
-                          (screenWidth >= 1200)? changeArrowDown('PROJECTS', '#fff') : '';
+                        @blur="() => {
+                          (screenWidth >= 1200)? (dropDownNav === 'PROJECTS'? changeArrowDown('PROJECTS', '#fff') : changeArrowDown('PROJECTS', '#00000')) : '';
                         }" 
-                        @mouseover="($event: Event) => {
-                          (closeOrStillOpenDropdown($event, ['projects', 'projects-link']) && (screenWidth >= 1200))? dropDownNav = 'PROJECTS' : dropDownNav = '';
-                          (screenWidth >= 1200)? changeArrowDown('PROJECTS', '#fff') : '';
+                        @mouseover="() => {
+                          (screenWidth >= 1200)? (dropDownNav === 'PROJECTS'? changeArrowDown('PROJECTS', '#fff') : changeArrowDown('PROJECTS', '#00000')) : '';
                         }" 
-                        @mouseleave="($event: Event) => {
-                          (closeOrStillOpenDropdown($event, ['projects', 'projects-link']) && (screenWidth >= 1200))? dropDownNav = 'PROJECTS' : dropDownNav = '';
-                        }"
-                        @focus="($event: Event) => {
-                          (closeOrStillOpenDropdown($event, ['projects', 'projects-link']) && (screenWidth >= 1200))? dropDownNav = 'PROJECTS' : dropDownNav = '';
-                          (screenWidth >= 1200)? changeArrowDown('PROJECTS', '#fff') : '';
-                        }"
+                        @focus="() => {
+                          (screenWidth >= 1200)? (dropDownNav === 'PROJECTS'? changeArrowDown('PROJECTS', '#fff') : changeArrowDown('PROJECTS', '#00000')) : '';
+                        }" 
                       >
                         Completed Projects
                       </RouterLink>
@@ -110,20 +152,14 @@ function changeArrowDown(id: 'PROJECTS' | 'EVENTS', color: string) {
                         to="/projects/ongoing"
                         style="padding:8px 5px;" 
                         class="d-block underline-none cursor-pointer" 
-                        @blur="($event: Event) => {
-                          (closeOrStillOpenDropdown($event, ['projects', 'projects-link']) && (screenWidth >= 1200))? dropDownNav = 'PROJECTS' : dropDownNav = '';
-                          (screenWidth >= 1200)? changeArrowDown('PROJECTS', '#fff') : '';
+                        @blur="() => {
+                          (screenWidth >= 1200)? (dropDownNav === 'PROJECTS'? changeArrowDown('PROJECTS', '#fff') : changeArrowDown('PROJECTS', '#00000')) : '';
                         }"
-                        @mouseover="($event: Event) => {
-                          (closeOrStillOpenDropdown($event, ['projects', 'projects-link']) && (screenWidth >= 1200))? dropDownNav = 'PROJECTS' : dropDownNav = '';
-                          (screenWidth >= 1200)? changeArrowDown('PROJECTS', '#fff') : '';
+                        @mouseover="() => {
+                          (screenWidth >= 1200)? (dropDownNav === 'PROJECTS'? changeArrowDown('PROJECTS', '#fff') : changeArrowDown('PROJECTS', '#00000')) : '';
                         }"
-                        @focus="($event: Event) => {
-                          (closeOrStillOpenDropdown($event, ['projects', 'projects-link']) && (screenWidth >= 1200))? dropDownNav = 'PROJECTS' : dropDownNav = '';
-                          (screenWidth >= 1200)? changeArrowDown('PROJECTS', '#fff') : '';
-                        }"
-                        @mouseleave="($event: Event) => {
-                          (closeOrStillOpenDropdown($event, ['projects', 'projects-link']) && (screenWidth >= 1200))? dropDownNav = 'PROJECTS' : dropDownNav = '';
+                        @focus="() => {
+                          (screenWidth >= 1200)? (dropDownNav === 'PROJECTS'? changeArrowDown('PROJECTS', '#fff') : changeArrowDown('PROJECTS', '#00000')) : '';
                         }"
                       >
                         Ongoing Projects
@@ -134,20 +170,15 @@ function changeArrowDown(id: 'PROJECTS' | 'EVENTS', color: string) {
                         to="/projects/uncommenced"
                         style="padding:8px 5px;" 
                         class="d-block underline-none cursor-pointer"  
-                        @blur="($event: Event) => {
-                          (closeOrStillOpenDropdown($event, ['projects', 'projects-link']) && (screenWidth >= 1200))? dropDownNav = 'PROJECTS' : dropDownNav = '';
-                          (screenWidth >= 1200)? changeArrowDown('PROJECTS', '#00000') : '';
+                        @blur="() => {
+                          dropDownNav = '';
+                          (screenWidth >= 1200)? (dropDownNav === 'PROJECTS'? changeArrowDown('PROJECTS', '#fff') : changeArrowDown('PROJECTS', '#00000')) : '';
                         }" 
-                        @mouseover="($event: Event) => {
-                          (closeOrStillOpenDropdown($event, ['projects', 'projects-link']) && (screenWidth >= 1200))? dropDownNav = 'PROJECTS' : dropDownNav = '';
-                          (screenWidth >= 1200)? changeArrowDown('PROJECTS', '#fff') : '';
+                        @mouseover="() => {
+                          (screenWidth >= 1200)? (dropDownNav === 'PROJECTS'? changeArrowDown('PROJECTS', '#fff') : changeArrowDown('PROJECTS', '#00000')) : '';
                         }" 
-                        @focus="($event: Event) => {
-                          (closeOrStillOpenDropdown($event, ['projects', 'projects-link']) && (screenWidth >= 1200))? dropDownNav = 'PROJECTS' : dropDownNav = '';
-                          (screenWidth >= 1200)? changeArrowDown('PROJECTS', '#fff') : '';
-                        }"
-                        @mouseleave="($event: Event) => {
-                          (closeOrStillOpenDropdown($event, ['projects', 'projects-link']) && (screenWidth >= 1200))? dropDownNav = 'PROJECTS' : dropDownNav = '';
+                        @focus="() => {
+                          (screenWidth >= 1200)? (dropDownNav === 'PROJECTS'? changeArrowDown('PROJECTS', '#fff') : changeArrowDown('PROJECTS', '#00000')) : '';
                         }"
                       >
                         Uncommenced Projects
@@ -183,13 +214,27 @@ function changeArrowDown(id: 'PROJECTS' | 'EVENTS', color: string) {
         <!-- Events -->
         <a 
           tabindex="0" 
-          id="events-link" 
-          @click="() => {(screenWidth >= 1200)? dropDownNav='EVENTS' : dropDownNav = '';}" 
-          @focus="() => {(screenWidth >= 1200)? dropDownNav='EVENTS' : dropDownNav = '';}" 
-          @keyup.enter="() => {(screenWidth >= 1200)? dropDownNav='EVENTS' : dropDownNav = '';}"
-          @mouseover="() => {(screenWidth >= 1200)? dropDownNav='EVENTS' : dropDownNav = '';}"
-          @mouseleave="(closeOrStillOpenDropdown($event, ['events']) && (screenWidth >= 1200))? dropDownNav = 'EVENTS' : dropDownNav = ''"
-          @blur="(closeOrStillOpenDropdown($event, ['events']) && (screenWidth >= 1200))? dropDownNav = 'EVENTS' : dropDownNav = ''"
+          id="events-link"  
+          @click="() => {
+            dropDownNav = (screenWidth >= 1200)? 'EVENTS' : '';
+            (screenWidth >= 1200)? changeArrowDown('EVENTS', '#fff') : '';
+          }" 
+          @focus="() => {
+            dropDownNav = (screenWidth >= 1200)? 'EVENTS' : '';
+            (screenWidth >= 1200)? changeArrowDown('EVENTS', '#fff') : '';
+          }" 
+          @keyup.enter="() => {
+            dropDownNav = (screenWidth >= 1200)? 'EVENTS' : '';
+            (screenWidth >= 1200)? changeArrowDown('EVENTS', '#fff') : '';
+          }"
+          @mouseover="() => {
+            dropDownNav = (screenWidth >= 1200)? 'EVENTS' : '';
+            (screenWidth >= 1200)? changeArrowDown('EVENTS', '#fff') : '';
+          }"
+          @mouseleave="($event: Event) => { 
+            dropDownNav = (closeOrStillOpenDropdown($event, ['events']) && (screenWidth >= 1200))? 'EVENTS' : '';
+            (screenWidth >= 1200)? (dropDownNav === 'EVENTS'? changeArrowDown('EVENTS', '#fff') : changeArrowDown('EVENTS', '#00000')) : '';
+          }" 
           class="d-block underline-none" 
           :style="(screenWidth >= 1200)? changeDropDownBGColor('EVENTS')+'padding:6px 0;' : 'padding:10px 0;background-color:#ebe9eb;'"
           :class="(screenWidth >= 1200)? ['nav-link', 'border-tr-tl-radius-15-px', 'cursor-pointer'] : ''"
@@ -210,7 +255,10 @@ function changeArrowDown(id: 'PROJECTS' | 'EVENTS', color: string) {
             <template v-if="dropDownNav === 'EVENTS'">
               <div 
                 style="width:170px;" 
-                @mouseleave="closeOrStillOpenDropdown($event, ['events-link'])? dropDownNav = 'EVENTS' : dropDownNav = ''" 
+                @mouseleave="($event: Event) => {
+                  dropDownNav = closeOrStillOpenDropdown($event, ['events-link'])? 'EVENTS' : '';
+                  (screenWidth >= 1200)? (dropDownNav === 'EVENTS'? changeArrowDown('EVENTS', '#fff') : changeArrowDown('EVENTS', '#00000')) : '';
+                }" 
                 id="events" 
                 class="position-absolute"
               >
@@ -221,20 +269,14 @@ function changeArrowDown(id: 'PROJECTS' | 'EVENTS', color: string) {
                         to="/events/upcoming" 
                         style="padding:8px 5px;" 
                         class="d-block underline-none cursor-pointer" 
-                        @blur="($event: Event) => {
-                          (closeOrStillOpenDropdown($event, ['events', 'events-link']) && (screenWidth >= 1200))? dropDownNav = 'EVENTS' : dropDownNav = '';
-                          (screenWidth >= 1200)? changeArrowDown('EVENTS', '#fff') : '';
+                        @blur="() => {
+                          (screenWidth >= 1200)? (dropDownNav === 'EVENTS'? changeArrowDown('EVENTS', '#fff') : changeArrowDown('EVENTS', '#00000')) : '';
                         }"
-                        @focus="($event: Event) => {
-                          (closeOrStillOpenDropdown($event, ['events', 'events-link']) && (screenWidth >= 1200))? dropDownNav = 'EVENTS' : dropDownNav = '';
-                          (screenWidth >= 1200)? changeArrowDown('EVENTS', '#fff') : '';
+                        @focus="() => {
+                          (screenWidth >= 1200)? (dropDownNav === 'EVENTS'? changeArrowDown('EVENTS', '#fff') : changeArrowDown('EVENTS', '#00000')) : '';
                         }"
-                        @mouseover="($event: Event) => {
-                          (closeOrStillOpenDropdown($event, ['events', 'events-link']) && (screenWidth >= 1200))? dropDownNav = 'EVENTS' : dropDownNav = '';
-                          (screenWidth >= 1200)? changeArrowDown('EVENTS', '#fff') : '';
-                        }"
-                        @mouseleave="($event: Event) => {
-                          (closeOrStillOpenDropdown($event, ['events', 'events-link']) && (screenWidth >= 1200))? dropDownNav = 'EVENTS' : dropDownNav = '';
+                        @mouseover="() => {
+                          (screenWidth >= 1200)? (dropDownNav === 'EVENTS'? changeArrowDown('EVENTS', '#fff') : changeArrowDown('EVENTS', '#00000')) : '';
                         }"
                       >
                         Upcoming Events
@@ -245,20 +287,15 @@ function changeArrowDown(id: 'PROJECTS' | 'EVENTS', color: string) {
                         to="/events/past" 
                         style="padding:8px 5px;" 
                         class="d-block underline-none cursor-pointer" 
-                        @blur="($event: Event) => {
-                          (closeOrStillOpenDropdown($event, ['events', 'events-link']) && (screenWidth >= 1200))? dropDownNav = 'EVENTS' : dropDownNav = '';
-                          (screenWidth >= 1200)? changeArrowDown('EVENTS', '#00000') : '';
+                        @blur="() => {
+                          dropDownNav = '';
+                          (screenWidth >= 1200)? (dropDownNav === 'EVENTS'? changeArrowDown('EVENTS', '#fff') : changeArrowDown('EVENTS', '#00000')) : '';
                         }"
-                        @mouseleave="($event: Event) => {
-                          (closeOrStillOpenDropdown($event, ['events', 'events-link']) && (screenWidth >= 1200))? dropDownNav = 'EVENTS' : dropDownNav = '';
+                        @focus="() => {
+                          (screenWidth >= 1200)? (dropDownNav === 'EVENTS'? changeArrowDown('EVENTS', '#fff') : changeArrowDown('EVENTS', '#00000')) : '';
                         }"
-                        @focus="($event: Event) => {
-                          (closeOrStillOpenDropdown($event, ['events', 'events-link']) && (screenWidth >= 1200))? dropDownNav = 'EVENTS' : dropDownNav = '';
-                          (screenWidth >= 1200)? changeArrowDown('EVENTS', '#fff') : '';
-                        }"
-                        @mouseover="($event: Event) => {
-                          (closeOrStillOpenDropdown($event, ['events', 'events-link']) && (screenWidth >= 1200))? dropDownNav = 'EVENTS' : dropDownNav = '';
-                          (screenWidth >= 1200)? changeArrowDown('EVENTS', '#fff') : '';
+                        @mouseover="() => {
+                          (screenWidth >= 1200)? (dropDownNav === 'EVENTS'? changeArrowDown('EVENTS', '#fff') : changeArrowDown('EVENTS', '#00000')) : '';
                         }"
                       >
                         Past Events
@@ -292,7 +329,6 @@ function changeArrowDown(id: 'PROJECTS' | 'EVENTS', color: string) {
         <RouterLink 
           to="/publications"
           :style="(screenWidth >= 1200)? 'padding:6px 0;' : 'padding: 10px 0px 10px 5px;'" 
-          @mouseover="dropDownNav=''" 
           class="d-block underline-none cursor-pointer nav-link"
           :class="(screenWidth >= 1200)? 'border-tr-tl-radius-15-px' : ''"
         >
@@ -308,7 +344,6 @@ function changeArrowDown(id: 'PROJECTS' | 'EVENTS', color: string) {
         <RouterLink 
           to="/survey"  
           :style="(screenWidth >= 1200)? 'padding:6px 0;' : 'padding: 10px 0px 10px 5px;'" 
-          @mouseover="dropDownNav=''" 
           class="d-block underline-none cursor-pointer nav-link"
           :class="(screenWidth >= 1200)? 'border-tr-tl-radius-15-px' : ''"
         >
@@ -324,7 +359,6 @@ function changeArrowDown(id: 'PROJECTS' | 'EVENTS', color: string) {
         <RouterLink 
           to="/about" 
           :style="(screenWidth >= 1200)? 'padding:6px 0;' : 'padding: 10px 0px 10px 5px;'" 
-          @mouseover="dropDownNav=''" 
           class="d-block underline-none cursor-pointer nav-link"
           :class="(screenWidth >= 1200)? 'border-tr-tl-radius-15-px' : ''"
         >
@@ -340,7 +374,6 @@ function changeArrowDown(id: 'PROJECTS' | 'EVENTS', color: string) {
         <RouterLink  
           to="/vision" 
           :style="(screenWidth >= 1200)? 'padding:6px 0;' : 'padding: 10px 0px 10px 5px;'" 
-          @mouseover="dropDownNav=''" 
           class="d-block underline-none cursor-pointer nav-link"
           :class="(screenWidth >= 1200)? 'border-tr-tl-radius-15-px' : ''"
         >
@@ -356,7 +389,6 @@ function changeArrowDown(id: 'PROJECTS' | 'EVENTS', color: string) {
         <RouterLink 
           to="/team" 
           :style="(screenWidth >= 1200)? 'padding:6px 0;' : 'padding: 10px 0px 10px 5px;'" 
-          @mouseover="dropDownNav=''" 
           class="d-block underline-none cursor-pointer nav-link"
           :class="(screenWidth >= 1200)? 'border-tr-tl-radius-15-px' : ''"
         >
@@ -371,8 +403,7 @@ function changeArrowDown(id: 'PROJECTS' | 'EVENTS', color: string) {
         <!-- Contact Us -->
         <RouterLink 
           to="/contact" 
-          :style="(screenWidth >= 1200)? 'padding:6px 0;' : 'padding: 10px 0px 10px 5px;'"  
-          @mouseover="dropDownNav=''" 
+          :style="(screenWidth >= 1200)? 'padding:6px 0;' : 'padding: 10px 0px 10px 5px;'" 
           class="d-block underline-none cursor-pointer nav-link"
           :class="(screenWidth >= 1200)? 'border-tr-tl-radius-15-px' : ''"
         >
